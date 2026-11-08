@@ -1,0 +1,90 @@
+[mod]
+id = "blood_particles"
+version = "1.2.0"
+priority = 110
+
+# The commit it was tested on (Nightly 2026-11-07). It hooks the native hook
+# points for the tick, the commands, its row and its settings page, and reads
+# two things of the game's own source a hook point does not carry: the client's
+# mob list (for the hurt flash and the health the blow took) and its particle
+# engine (to draw the blood): those name the source, so the launcher builds the
+# mod on this commit.
+[compatibility]
+horizon_revision = "2ebf00a0281c592f79191e76fce0e7d522c6f425"
+
+# runtime.rs becomes the module crate::blood_particles of horizon-client-lib: the
+# burst's geometry and its tests live there, and the game's hooks below call it.
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/client_lib.rs"
+name = "blood_particles"
+visibility = "pub"
+source = "runtime.rs"
+
+# Once a tick in the window's game: every mob whose hurt flash just restarted
+# has been hit, and bleeds.
+[[injection]]
+id = "tick"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_tick"
+helper = "tick.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+]
+
+# `/bloodparticles` reports what the mod is doing.
+[[injection]]
+id = "command"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_command"
+helper = "command.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "command", ty = "&str", value = "command" },
+  { name = "ran", ty = "&mut bool", value = "&mut *ran" },
+]
+
+# Its names in the chat box's completion.
+[[injection]]
+id = "commands"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_commands"
+helper = "commands.rs"
+bindings = [
+  { name = "commands", ty = "&mut Vec<&'static str>", value = "&mut *commands" },
+]
+
+# The buttons of its page in Options > Mods: one for each setting, drawn from
+# the player's file, asked again each time the page opens.
+[[injection]]
+id = "settings"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings"
+helper = "settings.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "buttons", ty = "&mut Vec<String>", value = "&mut *buttons" },
+]
+
+# A click on one of them: the setting moves on, and the file is written.
+[[injection]]
+id = "settings_click"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings_click"
+helper = "settings_click.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "button", ty = "usize", value = "button" },
+]
+
+# Its row in Options > Mods.
+[[injection]]
+id = "list"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "list.rs"
+bindings = [
+  { name = "mods", ty = "&mut Vec<crate::game::native_hooks::NativeMod>", value = "&mut *mods" },
+]

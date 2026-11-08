@@ -1,0 +1,12 @@
+[package]
+name = "horizon-mod-blood-particles"
+version = "1.2.0"
+edition = "2024"
+license = "MIT"
+publish = false
+authors = ["Bogdan_Tokarev"]
+description = "Blood Particles, a native mod for Horizon: a hurt mob sprays realistic droplets and mist of its own colour. By Bogdan_Tokarev."
+
+# The mod's logic and its tests: the same file the bundle adds to the game.
+[lib]
+path = "mixins/blood_particles/runtime.rs"
